@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#2979FF</color>  <!-- Cor primária -->
+    <color name="colorPrimaryVariant">#D5D2DB</color>  <!-- Cor primária variante -->
+    <color name="colorOnPrimary">#FFFFFF</color>  <!-- Cor do texto na cor primária -->
+    <color name="colorGray">#B0B0B0</color>
+    <color name="white">#FFFFFF</color><!-- Cor cinza para o menu lateral -->
+    <color name="zoom_button_background">#B0B0B0</color>
+</resources>

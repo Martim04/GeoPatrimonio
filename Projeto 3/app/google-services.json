@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "275661080837",
+    "project_id": "geopatrimonio-76411",
+    "storage_bucket": "geopatrimonio-76411.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:275661080837:android:b6ba9cdc1bc9ad97f34f6c",
+        "android_client_info": {
+          "package_name": "com.example.projeto"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "275661080837-v8nl20jfjijnqhoe8p22dearqnft3a1h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.projeto",
+            "certificate_hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+          }
+        },
+        {
+          "client_id": "275661080837-32cu5dsbtgk1ff9afubd1qe2fqe5lhdu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARkgq90_W7xidcV1WTNXuzG0mhbytQPGU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "275661080837-32cu5dsbtgk1ff9afubd1qe2fqe5lhdu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

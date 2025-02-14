@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name"></string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_profile">Profile</string>
+    <string name="user_name">User Name</string>
+    <string name="user_email">user@example.com</string>
+    <string name="default_web_client_id" translatable="false">275661080837-32cu5dsbtgk1ff9afubd1qe2fqe5lhdu.apps.googleusercontent.com</string>    <string name="google_sign_in">Sign in with Google</string>
+    <string name="facebook_sign_in">Sign in with Facebook</string>
+
+
+</resources>
