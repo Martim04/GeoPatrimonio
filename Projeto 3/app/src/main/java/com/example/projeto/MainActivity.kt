@@ -2,41 +2,37 @@ package com.example.projeto
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.android.gms.maps.model.LatLng
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
     private lateinit var toolbar: Toolbar
-    private lateinit var mMap: GoogleMap
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var zoomInButton: Button
     private lateinit var zoomOutButton: Button
     private lateinit var navIcon: ImageView
-    private val LOCATION_PERMISSION_REQUEST_CODE = 1
     private lateinit var db: FirebaseFirestore
     private lateinit var auth: FirebaseAuth
+    private val zoomViewModel: ZoomViewModel by viewModels()
+    private lateinit var googleMap: GoogleMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +53,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         // Set Toolbar as ActionBar
         setSupportActionBar(toolbar)
 
-        // Set navigation icon click listener
+        // Set navIcon click listener to open the drawer
         navIcon.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
@@ -66,111 +62,77 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_home -> {
-                    // Handle home navigation
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, HomeFragment())
+                        .commit()
                 }
                 R.id.nav_profile -> {
-                    // Handle profile navigation
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, ProfileFragment())
+                        .commit()
+                }
+                R.id.nav_settings -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, SettingsFragment())
+                        .commit()
+                }
+                R.id.nav_pois -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, POIMapFragment())
+                        .commit()
+                }
+                R.id.nav_add_poi -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, AddPoiFragment())
+                        .commit()
                 }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
             true
         }
 
-        // Set user info in nav header
-        val headerView = navigationView.getHeaderView(0)
-        val navHeaderName = headerView.findViewById<TextView>(R.id.nav_header_name)
-        val navHeaderEmail = headerView.findViewById<TextView>(R.id.nav_header_email)
-
-        val user = auth.currentUser
-        user?.let {
-            navHeaderEmail.text = it.email
-            db.collection("users").document(it.uid).get()
-                .addOnSuccessListener { document ->
-                    if (document != null) {
-                        navHeaderName.text = document.getString("name")
-                    }
-                }
-                .addOnFailureListener { e ->
-                    // Handle the error
-                }
+        // Load SupportMapFragment by default
+        if (savedInstanceState == null) {
+            val mapFragment = SupportMapFragment.newInstance()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, mapFragment)
+                .commit()
+            mapFragment.getMapAsync(this)
         }
-
-        // Get the SupportMapFragment and request notification when the map is ready to be used
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
-        // Initialize FusedLocationProviderClient
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         // Set zoom button listeners
         zoomInButton.setOnClickListener {
-            zoomIn()
+            zoomViewModel.zoomIn()
         }
 
         zoomOutButton.setOnClickListener {
-            zoomOut()
+            zoomViewModel.zoomOut()
         }
-    }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-        // Check if location permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            // Get the current location
-            getDeviceLocation()
-        } else {
-            // Request location permission
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-        }
-    }
+        // Fetch and display user details in the navigation header
+        val headerView = navigationView.getHeaderView(0)
+        val navHeaderName = headerView.findViewById<TextView>(R.id.nav_header_name)
+        val navHeaderEmail = headerView.findViewById<TextView>(R.id.nav_header_email)
+        val currentUser = auth.currentUser
 
-    private fun getDeviceLocation() {
-        try {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                location?.let {
-                    // Move the camera to the current location
-                    val currentLatLng = LatLng(it.latitude, it.longitude)
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
-                    // Enable the location button
-                    mMap.isMyLocationEnabled = true
+        currentUser?.let {
+            db.collection("users").document(it.uid).get().addOnSuccessListener { document ->
+                if (document != null) {
+                    navHeaderName.text = document.getString("name")
+                    navHeaderEmail.text = document.getString("email")
                 }
             }
-        } catch (e: SecurityException) {
-            // Handle security exception
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, get the current location
-                getDeviceLocation()
-            } else {
-                // Permission denied, show a message or handle differently
-            }
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        val porto = LatLng(41.14961, -8.61099)
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(porto, 15f))
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            googleMap.isMyLocationEnabled = true
         }
-    }
-
-    private fun zoomIn() {
-        val currentZoomLevel = mMap.cameraPosition.zoom
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(currentZoomLevel + 1))
-    }
-
-    private fun zoomOut() {
-        val currentZoomLevel = mMap.cameraPosition.zoom
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(currentZoomLevel - 1))
+        zoomViewModel.setGoogleMap(googleMap)
     }
 }

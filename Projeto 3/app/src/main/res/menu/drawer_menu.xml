@@ -17,6 +17,10 @@
             android:id="@+id/nav_pois"
             android:icon="@drawable/ic_person"
             android:title="POIs" />
+        <item
+            android:id="@+id/nav_add_poi"
+            android:title="Adicionar POI"
+            android:icon="@drawable/ic_person" />
     </group>
 
     <!-- Divider -->
