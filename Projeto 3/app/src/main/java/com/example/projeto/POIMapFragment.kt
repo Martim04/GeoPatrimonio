@@ -19,6 +19,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class POIMapFragment : Fragment(), OnMapReadyCallback {
@@ -31,6 +33,7 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
     private val zoomViewModel: ZoomViewModel by activityViewModels()
     private var currentLocation: Location? = null
     private lateinit var googleMap: GoogleMap
+    private lateinit var currentUserId: String
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1
@@ -43,6 +46,7 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         val view = inflater.inflate(R.layout.fragment_poi_map, container, false)
         db = FirebaseFirestore.getInstance()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.poi_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
@@ -80,23 +84,33 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    fun loadPOIs() {
-        db.collection("POIs").get().addOnSuccessListener { result ->
-            poiList.clear()
-            poiSet.clear()
-            for (document in result) {
-                val lat = document.getDouble("latitude") ?: 0.0
-                val lng = document.getDouble("longitude") ?: 0.0
-                val title = document.getString("titulo") ?: "POI"
-                val description = document.getString("descricao") ?: ""
-                val poi = POI(title, description, lat, lng)
-                if (poiSet.add(poi)) {
-                    poiList.add(poi)
+    private fun loadPOIs() {
+        db.collection("POIs")
+            .whereEqualTo("criado_por", currentUserId)
+            .get()
+            .addOnSuccessListener { result ->
+                poiList.clear()
+                poiSet.clear()
+                googleMap.clear()
+                for (document in result) {
+                    val lat = document.getDouble("latitude") ?: 0.0
+                    val lng = document.getDouble("longitude") ?: 0.0
+                    val title = document.getString("titulo") ?: "POI"
+                    val description = document.getString("descricao") ?: ""
+                    val poi = POI(title, description, lat, lng)
+                    if (poiSet.add(poi)) {
+                        poiList.add(poi)
+                        addMarker(poi)
+                    }
                 }
+                updateDistances()
+                poiAdapter.notifyDataSetChanged()
             }
-            updateDistances()
-            poiAdapter.notifyDataSetChanged()
-        }
+    }
+
+    private fun addMarker(poi: POI) {
+        val position = LatLng(poi.latitude, poi.longitude)
+        googleMap.addMarker(MarkerOptions().position(position).title(poi.title))
     }
 
     private fun updateDistances() {
@@ -123,7 +137,10 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         googleMap = map
         val porto = LatLng(41.14961, -8.61099)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(porto, 15f))
-        googleMap.isMyLocationEnabled = true
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            googleMap.isMyLocationEnabled = true
+        }
         zoomViewModel.setGoogleMap(googleMap)
     }
 

@@ -12,7 +12,7 @@
         <item
             android:id="@+id/nav_settings"
             android:title="Settings"
-            android:icon="@drawable/ic_home" />
+            android:icon="@drawable/ic_def" />
         <item
             android:id="@+id/nav_pois"
             android:icon="@drawable/ic_person"
@@ -29,7 +29,7 @@
             <item
                 android:id="@+id/nav_about"
                 android:title="About"
-                android:icon="@drawable/ic_home" />
+                android:icon="@drawable/ic_info" />
             <item
                 android:id="@+id/nav_help"
                 android:title="Help"
@@ -41,5 +41,5 @@
     <item
         android:id="@+id/nav_logout"
         android:title="Logout"
-        android:icon="@drawable/ic_home" />
+        android:icon="@drawable/ic_exit" />
 </menu>
