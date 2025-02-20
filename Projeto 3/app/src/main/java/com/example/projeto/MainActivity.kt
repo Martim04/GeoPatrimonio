@@ -1,6 +1,7 @@
 package com.example.projeto
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Button
@@ -16,10 +17,10 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.android.gms.maps.model.LatLng
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -85,6 +86,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.fragment_container, AddPoiFragment())
                         .commit()
+                }
+                R.id.nav_logout -> {
+                    FirebaseAuth.getInstance().signOut()
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                    finish()
                 }
             }
             drawerLayout.closeDrawer(GravityCompat.START)
