@@ -52,10 +52,14 @@
         android:id="@+id/buttonRegister"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/colorPrimary"
+        android:textColor="@android:color/white"
         android:text="Register" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonGoogleRegister"
+        android:backgroundTint="@color/colorPrimary"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -66,6 +70,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonFacebookRegister"
+        android:backgroundTint="@color/colorPrimary"
+        android:textColor="@android:color/white"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

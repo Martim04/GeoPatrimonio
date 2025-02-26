@@ -50,6 +50,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     implementation("com.facebook.android:facebook-login:11.3.0")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("com.google.maps:google-maps-services:0.18.0")
+    implementation ("com.squareup.okhttp3:okhttp:4.10.0") // Update to the latest version
+    implementation ("com.google.maps:google-maps-services:0.18.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
