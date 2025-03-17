@@ -4,26 +4,32 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class POI(
+    val id: String,
     val title: String,
     val description: String,
     val latitude: Double,
     val longitude: Double,
-    var distance: Float = 0f
+    var distance: Float = 0f,
+    val imageBase64: String? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
         parcel.readString() ?: "",
+        parcel.readString() ?: "",
         parcel.readDouble(),
         parcel.readDouble(),
-        parcel.readFloat()
+        parcel.readFloat(),
+        parcel.readString()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
         parcel.writeString(title)
         parcel.writeString(description)
         parcel.writeDouble(latitude)
         parcel.writeDouble(longitude)
         parcel.writeFloat(distance)
+        parcel.writeString(imageBase64)
     }
 
     override fun describeContents() = 0

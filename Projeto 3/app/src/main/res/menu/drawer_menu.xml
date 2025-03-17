@@ -21,6 +21,16 @@
             android:id="@+id/nav_add_poi"
             android:title="Adicionar POI"
             android:icon="@drawable/ic_person" />
+        <item
+            android:id="@+id/nav_update_poi"
+            android:icon="@drawable/ic_person"
+            android:title="Update POI"
+            android:visible="false" />
+        <item
+            android:id="@+id/nav_admin"
+            android:icon="@drawable/ic_person"
+            android:title="Admin"
+            android:visible="false"/>
     </group>
 
     <!-- Divider -->

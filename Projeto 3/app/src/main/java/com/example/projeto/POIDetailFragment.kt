@@ -1,17 +1,19 @@
 package com.example.projeto
 
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -29,7 +31,6 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var poi: POI
     private lateinit var geoApiContext: GeoApiContext
-    private val zoomViewModel: ZoomViewModel by activityViewModels()
     private lateinit var routeSelector: Spinner
     private var routes: List<DirectionsRoute> = emptyList()
 
@@ -51,7 +52,7 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poi_detail, container, false)
-        poi = arguments?.getParcelable(ARG_POI) ?: throw IllegalArgumentException("POI é necessário")
+        poi = arguments?.getParcelable(ARG_POI) ?: throw IllegalArgumentException("POI is required")
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -65,6 +66,14 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
         view.findViewById<TextView>(R.id.poi_title).text = poi.title
         view.findViewById<TextView>(R.id.poi_description).text = poi.description
 
+        // Decode and set the image
+        val imageView = view.findViewById<ImageView>(R.id.poi_image)
+        poi.imageBase64?.let {
+            val imageBytes = Base64.decode(it, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageView.setImageBitmap(bitmap)
+        } ?: imageView.setImageResource(R.drawable.placeholder_image) // Placeholder image if no image is available
+
         view.findViewById<Button>(R.id.btn_drive).setOnClickListener { getRoute(TravelMode.DRIVING) }
         view.findViewById<Button>(R.id.btn_walk).setOnClickListener { getRoute(TravelMode.WALKING) }
         view.findViewById<Button>(R.id.btn_transit).setOnClickListener { getRoute(TravelMode.TRANSIT) }
@@ -77,11 +86,10 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
         val poiLocation = LatLng(poi.latitude, poi.longitude)
         mMap.addMarker(MarkerOptions().position(poiLocation).title(poi.title))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(poiLocation, 15f))
-        zoomViewModel.setGoogleMap(mMap)
     }
 
     private fun getRoute(travelMode: TravelMode) {
-        val currentLocation = LatLng(41.14961, -8.61099) // Substituir pela localização atual
+        val currentLocation = LatLng(41.14961, -8.61099) // Replace with actual current location
         val poiLocation = LatLng(poi.latitude, poi.longitude)
 
         DirectionsApi.newRequest(geoApiContext)
@@ -93,7 +101,7 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
                 override fun onResult(result: DirectionsResult) {
                     routes = result.routes.toList()
                     val routeOptions = routes.mapIndexed { index, route ->
-                        "Rota ${index + 1}: ${route.legs[0].duration.humanReadable}"
+                        "Route ${index + 1}: ${route.legs[0].duration.humanReadable}"
                     }
                     activity?.runOnUiThread {
                         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, routeOptions)
@@ -124,17 +132,17 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
                 polylineOptions.addAll(step.polyline.decodePath().map { LatLng(it.lat, it.lng) })
                 if (step.travelMode == TravelMode.TRANSIT) {
                     val transitDetails = step.transitDetails
-                    stepsInfo.append("<b>Apanhe ${transitDetails.line.shortName}</b> de <b>${transitDetails.departureStop.name}</b> para <b>${transitDetails.arrivalStop.name}</b><br>")
+                    stepsInfo.append("<b>Take ${transitDetails.line.shortName}</b> from <b>${transitDetails.departureStop.name}</b> to <b>${transitDetails.arrivalStop.name}</b><br>")
                 }
             }
         }
         val duration = route.legs[0].duration.humanReadable
         activity?.runOnUiThread {
-            mMap.clear() // Limpar polilinhas e marcadores existentes
+            mMap.clear() // Clear existing polylines and markers
             mMap.addPolyline(polylineOptions)
-            mMap.addMarker(MarkerOptions().position(LatLng(41.14961, -8.61099)).title("Início"))
-            mMap.addMarker(MarkerOptions().position(LatLng(poi.latitude, poi.longitude)).title("Fim"))
-            view?.findViewById<TextView>(R.id.route_duration)?.text = "Tempo estimado de viagem: $duration"
+            mMap.addMarker(MarkerOptions().position(LatLng(41.14961, -8.61099)).title("Start"))
+            mMap.addMarker(MarkerOptions().position(LatLng(poi.latitude, poi.longitude)).title("End"))
+            view?.findViewById<TextView>(R.id.route_duration)?.text = "Estimated travel time: $duration"
             view?.findViewById<TextView>(R.id.route_steps)?.text = stepsInfo.toString()
         }
     }

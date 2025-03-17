@@ -8,9 +8,14 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="344dp"
+        android:layout_height="290dp"
         android:layout_marginBottom="16dp" />
-
+    <ImageView
+        android:id="@+id/poi_image"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="16dp" />
     <TextView
         android:id="@+id/poi_title"
         android:layout_width="match_parent"

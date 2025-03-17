@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -34,6 +35,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var auth: FirebaseAuth
     private val zoomViewModel: ZoomViewModel by viewModels()
     private lateinit var googleMap: GoogleMap
+
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +92,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         .replace(R.id.fragment_container, AddPoiFragment())
                         .commit()
                 }
+                R.id.nav_update_poi -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, UpdatePoiFragment())
+                        .commit()
+                }
+                R.id.nav_admin -> {
+                    // Handle admin navigation
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, AdminFragment())
+                        .commit()
+                }
                 R.id.nav_logout -> {
                     FirebaseAuth.getInstance().signOut()
                     val intent = Intent(this, LoginActivity::class.java)
@@ -128,6 +144,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 if (document != null) {
                     navHeaderName.text = document.getString("name")
                     navHeaderEmail.text = document.getString("email")
+                    val userType = document.getString("type")
+                    if (userType == "admin") {
+                        navigationView.menu.findItem(R.id.nav_update_poi).isVisible = true
+                        navigationView.menu.findItem(R.id.nav_admin).isVisible = true
+
+                    }
                 }
             }
         }
@@ -137,10 +159,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap = map
         val porto = LatLng(41.14961, -8.61099)
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(porto, 15f))
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            googleMap.isMyLocationEnabled = true
-        }
+        enableMyLocation()
         zoomViewModel.setGoogleMap(googleMap)
+    }
+
+    private fun enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            googleMap.isMyLocationEnabled = true
+        } else {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                enableMyLocation()
+            }
+        }
     }
 }

@@ -5,6 +5,13 @@
     android:padding="8dp"
     android:background="?attr/selectableItemBackground">
 
+    <ImageView
+        android:id="@+id/poi_image"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="8dp" />
+
     <TextView
         android:id="@+id/poi_title"
         android:layout_width="match_parent"

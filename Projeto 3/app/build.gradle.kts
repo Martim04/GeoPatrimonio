@@ -53,6 +53,7 @@ dependencies {
     implementation("com.google.maps:google-maps-services:0.18.0")
     implementation ("com.squareup.okhttp3:okhttp:4.10.0") // Update to the latest version
     implementation ("com.google.maps:google-maps-services:0.18.0")
+    implementation ("androidx.core:core-ktx:1.6.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
