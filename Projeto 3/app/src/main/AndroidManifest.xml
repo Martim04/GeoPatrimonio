@@ -44,7 +44,10 @@
             </intent-filter>
         </activity>
 
+
         <activity android:name=".AddPoiFragment" />
+        <activity android:name=".EditProfileActivity" />
+        <activity android:name=".PrivacySettingsActivity" />
 
     </application>
 </manifest>
