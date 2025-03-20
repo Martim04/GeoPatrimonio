@@ -24,7 +24,6 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/poi_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:divider="@android:color/darker_gray"
-        android:dividerHeight="1dp" />
+        android:layout_height="400dp"
+        android:layout_marginBottom="16dp" />>
 </LinearLayout>

@@ -25,7 +25,7 @@ import com.google.maps.GeoApiContext
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.DirectionsRoute
 import com.google.maps.model.TravelMode
-
+import POI
 class POIDetailFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap

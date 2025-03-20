@@ -1,8 +1,9 @@
-// POIMapFragment.kt
 package com.example.projeto
 
+import POI
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -36,9 +37,11 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         db = FirebaseFirestore.getInstance()
         currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
+        // Inicializa o fragmento do mapa
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        // Configura o RecyclerView
         val recyclerView = view.findViewById<RecyclerView>(R.id.poi_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
         poiAdapter = POIAdapter(poiList) { poi -> openMapFragment(poi) }
@@ -50,34 +53,36 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
         loadUserPOIs()
+
+        // Verificação das permissões de localização
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             googleMap.isMyLocationEnabled = true
+        } else {
+            // Solicitar permissões, se necessário
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
     }
 
     private fun loadUserPOIs() {
-        db.collection("POIs")
-            .whereEqualTo("criado_por", currentUserId)
-            .get()
-            .addOnSuccessListener { result ->
-                poiList.clear()
-                googleMap.clear()
-                for (document in result) {
-                    val id = document.id
-                    val lat = document.getDouble("latitude") ?: 0.0
-                    val lng = document.getDouble("longitude") ?: 0.0
-                    val title = document.getString("titulo") ?: "POI"
-                    val description = document.getString("descricao") ?: ""
-                    val poi = POI(id, title, description, lat, lng)
-                    poiList.add(poi)
-                    googleMap.addMarker(MarkerOptions().position(LatLng(lat, lng)).title(title))
-                }
-                poiAdapter.notifyDataSetChanged()
+        db.collection("POIs").get().addOnSuccessListener { result ->
+            poiList.clear()
+            for (document in result) {
+                val id = document.id
+                val title = document.getString("titulo") ?: "POI"
+                val description = document.getString("descricao") ?: ""
+                val latitude = document.getDouble("latitude") ?: 0.0
+                val longitude = document.getDouble("longitude") ?: 0.0
+                val imageBase64 = document.getString("imagemBase64")
+                val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
+                poiList.add(poi)
             }
+            poiAdapter.notifyDataSetChanged()
+        }
     }
 
     private fun openMapFragment(poi: POI) {
+        // Passando apenas o ID do POI para o fragmento de detalhes
         val fragment = POIDetailFragment.newInstance(poi)
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)

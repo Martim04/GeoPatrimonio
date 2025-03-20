@@ -1,14 +1,12 @@
-package com.example.projeto
-
 import android.os.Parcel
 import android.os.Parcelable
 
 data class POI(
-    val id: String,
-    val title: String,
-    val description: String,
-    val latitude: Double,
-    val longitude: Double,
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
     var distance: Float = 0f,
     val imageBase64: String? = null
 ) : Parcelable {

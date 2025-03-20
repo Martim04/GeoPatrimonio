@@ -2,7 +2,6 @@ package com.example.projeto
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -14,12 +13,19 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.maps.*
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import POI
+import android.graphics.Bitmap
 
 class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
 
@@ -30,13 +36,10 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
     private var selectedImageBase64: String? = null
     private val PICK_IMAGE_REQUEST = 1
     private lateinit var selectedImageView: ImageView
-    private lateinit var poiList: MutableList<POI>
     private lateinit var poiAdapter: POIAdapter
+    private val poiList = mutableListOf<POI>()
     private lateinit var viewFlipper: ViewFlipper
-    private lateinit var editTextPoiName: EditText
-    private lateinit var editTextPoiDescription: EditText
-    private lateinit var buttonBack: Button
-    private var selectedPoiId: String? = null // Armazena o ID do POI selecionado
+    private var currentPoi: POI? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,53 +50,44 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
         db = FirebaseFirestore.getInstance()
         currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-        viewFlipper = view.findViewById(R.id.viewFlipper)
-        editTextPoiName = view.findViewById(R.id.editTextPoiName)
-        editTextPoiDescription = view.findViewById(R.id.editTextPoiDescription)
-        val buttonUpdatePoi = view.findViewById<Button>(R.id.buttonUpdatePoi)
-        val buttonDeletePoi = view.findViewById<Button>(R.id.buttonDeletePoi)
-        val buttonSelectImage = view.findViewById<Button>(R.id.buttonSelectImage)
-        buttonBack = view.findViewById(R.id.buttonBack)
-        selectedImageView = view.findViewById(R.id.selectedImageView)
-
-        buttonUpdatePoi.setOnClickListener {
-            val poiName = editTextPoiName.text.toString()
-            val poiDescription = editTextPoiDescription.text.toString()
-            val location = selectedLocation // Armazena localmente para evitar smart cast error
-
-            if (poiName.isNotEmpty() && poiDescription.isNotEmpty() && location != null && selectedPoiId != null) {
-                updatePoiInFirestore(selectedPoiId!!, poiName, poiDescription, location)
-            } else {
-                Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        buttonDeletePoi.setOnClickListener {
-            if (selectedPoiId != null) {
-                deletePoiFromFirestore(selectedPoiId!!)
-            } else {
-                Toast.makeText(requireContext(), "Erro: Nenhum POI selecionado", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        buttonSelectImage.setOnClickListener {
-            val intent = Intent(Intent.ACTION_GET_CONTENT)
-            intent.type = "image/*"
-            startActivityForResult(intent, PICK_IMAGE_REQUEST)
-        }
-
-        buttonBack.setOnClickListener {
-            viewFlipper.displayedChild = 0
-        }
-
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.poi_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        poiList = mutableListOf()
         poiAdapter = POIAdapter(poiList) { poi -> openEditView(poi) }
         recyclerView.adapter = poiAdapter
+
+        selectedImageView = view.findViewById(R.id.selectedImageView)
+        viewFlipper = view.findViewById(R.id.viewFlipper)
+
+        view.findViewById<Button>(R.id.buttonSelectImage).setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, PICK_IMAGE_REQUEST)
+        }
+
+        view.findViewById<Button>(R.id.buttonUpdatePoi).setOnClickListener {
+            val editTextPoiName = view.findViewById<EditText>(R.id.editTextPoiName)
+            val editTextPoiDescription = view.findViewById<EditText>(R.id.editTextPoiDescription)
+            val name = editTextPoiName.text.toString()
+            val description = editTextPoiDescription.text.toString()
+            selectedLocation?.let { location ->
+                currentPoi?.let { poi ->
+                    updatePoiInFirestore(poi.id, name, description, location)
+                }
+            }
+        }
+
+        view.findViewById<Button>(R.id.buttonDeletePoi).setOnClickListener {
+            currentPoi?.let { poi ->
+                deletePoiFromFirestore(poi.id)
+            }
+        }
+
+        view.findViewById<Button>(R.id.buttonBack).setOnClickListener {
+            viewFlipper.displayedChild = 0
+        }
 
         loadPublicPOIs()
 
@@ -107,9 +101,6 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
             mMap.addMarker(MarkerOptions().position(latLng).title("Localização do POI"))
             selectedLocation = latLng
         }
-
-        val defaultLocation = LatLng(-34.0, 151.0)
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -122,14 +113,12 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
                 val selectedImage = BitmapFactory.decodeStream(imageStream)
                 selectedImageView.setImageBitmap(selectedImage)
                 selectedImageView.visibility = View.VISIBLE
-            } else {
-                Toast.makeText(requireContext(), "Erro ao obter a imagem", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun encodeImageToBase64(uri: Uri): String {
-        val inputStream = requireContext().contentResolver.openInputStream(uri)
+        val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
         val bitmap = BitmapFactory.decodeStream(inputStream)
         val outputStream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
@@ -137,16 +126,38 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
+    private fun openEditView(poi: POI) {
+        viewFlipper.displayedChild = 1
+        currentPoi = poi
+
+        view?.findViewById<EditText>(R.id.editTextPoiName)?.setText(poi.title)
+        view?.findViewById<EditText>(R.id.editTextPoiDescription)?.setText(poi.description)
+        selectedLocation = LatLng(poi.latitude, poi.longitude)
+
+        poi.imageBase64?.let {
+            val imageBytes = Base64.decode(it, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            selectedImageView.setImageBitmap(bitmap)
+            selectedImageView.visibility = View.VISIBLE
+        } ?: run {
+            selectedImageView.visibility = View.GONE
+        }
+    }
+
     private fun updatePoiInFirestore(id: String, name: String, description: String, location: LatLng) {
         val poiData = hashMapOf(
-            "name" to name,
-            "description" to description,
+            "titulo" to name,
+            "descricao" to description,
             "latitude" to location.latitude,
             "longitude" to location.longitude,
-            "userId" to currentUserId
+            "criado_por" to currentUserId
         )
 
-        db.collection("POIs").document(id).set(poiData)
+        selectedImageBase64?.let {
+            poiData["imagemBase64"] = it
+        }
+
+        db.collection("POIs").document(id).set(poiData, SetOptions.merge())
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "POI atualizado com sucesso", Toast.LENGTH_SHORT).show()
                 viewFlipper.displayedChild = 0
@@ -157,51 +168,31 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
             }
     }
 
+    private fun loadPublicPOIs() {
+        db.collection("POIs").get().addOnSuccessListener { result ->
+            poiList.clear()
+            for (document in result) {
+                val id = document.id
+                val title = document.getString("titulo") ?: "POI"
+                val description = document.getString("descricao") ?: ""
+                val latitude = document.getDouble("latitude") ?: 0.0
+                val longitude = document.getDouble("longitude") ?: 0.0
+                val imageBase64 = document.getString("imagemBase64")
+                val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
+                poiList.add(poi)
+            }
+            poiAdapter.notifyDataSetChanged()
+        }
+    }
     private fun deletePoiFromFirestore(id: String) {
         db.collection("POIs").document(id).delete()
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "POI excluído com sucesso", Toast.LENGTH_SHORT).show()
-                viewFlipper.displayedChild = 0
-                loadPublicPOIs()
+                loadPublicPOIs() // Atualiza a lista após a exclusão
+                viewFlipper.displayedChild = 0 // Voltar para a lista de POIs
             }
             .addOnFailureListener { e ->
                 Toast.makeText(requireContext(), "Erro ao excluir POI: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun loadPublicPOIs() {
-        db.collection("POIs")
-            .whereEqualTo("publico", true)
-            .get()
-            .addOnSuccessListener { result ->
-                poiList.clear()
-                for (document in result) {
-                    val id = document.id
-                    val lat = document.getDouble("latitude") ?: 0.0
-                    val lng = document.getDouble("longitude") ?: 0.0
-                    val title = document.getString("name") ?: "POI"
-                    val description = document.getString("description") ?: ""
-                    val poi = POI(id, title, description, lat, lng)
-                    poiList.add(poi)
-                }
-                poiAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Erro ao carregar POIs públicos: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun openEditView(poi: POI) {
-        viewFlipper.displayedChild = 1
-        editTextPoiName.setText(poi.title)
-        editTextPoiDescription.setText(poi.description)
-        selectedPoiId = poi.id
-
-        selectedLocation = LatLng(poi.latitude, poi.longitude)
-        mMap.clear()
-        mMap.addMarker(MarkerOptions().position(selectedLocation!!).title("Localização do POI"))
-        selectedLocation?.let {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(it, 14f))
-        }
     }
 }

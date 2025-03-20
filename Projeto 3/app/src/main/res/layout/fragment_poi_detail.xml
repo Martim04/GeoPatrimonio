@@ -1,85 +1,111 @@
+<!-- fragment_poi_detail.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@android:color/white">
 
+    <!-- Mapa -->
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="290dp"
         android:layout_marginBottom="16dp" />
+
+    <!-- Imagem do POI -->
     <ImageView
         android:id="@+id/poi_image"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:layout_marginBottom="16dp"
         android:scaleType="centerCrop"
-        android:layout_marginBottom="16dp" />
+        android:src="@drawable/placeholder_image" /> <!-- Placeholder para imagem -->
+
+    <!-- Título do POI -->
     <TextView
         android:id="@+id/poi_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="18sp"
         android:textColor="@android:color/black"
+        android:textStyle="bold"
         android:paddingBottom="8dp" />
 
+    <!-- Descrição do POI -->
     <TextView
         android:id="@+id/poi_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="14sp"
         android:textColor="@android:color/darker_gray"
+        android:lineSpacingExtra="4dp"
         android:paddingBottom="16dp" />
 
+    <!-- Tempo estimado da rota -->
     <TextView
         android:id="@+id/route_duration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="8dp"
+        android:textColor="@android:color/black"
+        android:textStyle="italic" />
 
+    <!-- Detalhes das etapas da rota -->
     <TextView
         android:id="@+id/route_steps"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="8dp"
         android:textColor="@android:color/black"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:lineSpacingExtra="2dp"
+        android:paddingBottom="16dp" />
 
+    <!-- Spinner de rotas -->
     <Spinner
         android:id="@+id/route_selector"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp" />
 
+    <!-- Botões de navegação -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:weightSum="3">
 
         <Button
             android:id="@+id/btn_drive"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Conduzir"
             android:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
 
         <Button
             android:id="@+id/btn_walk"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Caminhar"
             android:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
 
         <Button
             android:id="@+id/btn_transit"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Transportes"
             android:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:padding="12dp" />
     </LinearLayout>
+
 </LinearLayout>

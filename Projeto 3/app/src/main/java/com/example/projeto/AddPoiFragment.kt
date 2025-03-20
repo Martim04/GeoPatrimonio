@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
@@ -83,7 +84,7 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
             selectedLocation = latLng
         }
 
-        val defaultLocation = LatLng(-34.0, 151.0)
+        val defaultLocation = LatLng(41.15, -8.6)
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
     }
 
@@ -91,37 +92,67 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK && data != null && data.data != null) {
             val imageUri = data.data
-            selectedImageBase64 = encodeImageToBase64(imageUri!!)
-            val imageStream = requireContext().contentResolver.openInputStream(imageUri)
-            val selectedImage = BitmapFactory.decodeStream(imageStream)
-            selectedImageView.setImageBitmap(selectedImage)
-            selectedImageView.visibility = View.VISIBLE
+            val base64Image = encodeImageToBase64(imageUri!!)
+
+            if (base64Image != null) {
+                selectedImageBase64 = base64Image
+                selectedImageView.setImageURI(imageUri)
+                selectedImageView.visibility = View.VISIBLE
+            }
         }
     }
 
-    private fun encodeImageToBase64(uri: Uri): String {
+    private fun encodeImageToBase64(uri: Uri): String? {
         val inputStream: InputStream? = requireContext().contentResolver.openInputStream(uri)
         val bitmap = BitmapFactory.decodeStream(inputStream)
+
         val outputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Redução de qualidade para melhor desempenho
         val byteArray = outputStream.toByteArray()
+
+        // Verifica se o tamanho está dentro do limite de 1MB do Firestore
+        if (byteArray.size > 900000) { // Mantém um pouco abaixo de 1MB para segurança
+            Toast.makeText(requireContext(), "Imagem muito grande. Escolha outra.", Toast.LENGTH_SHORT).show()
+            return null
+        }
+
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
     private fun addPoiToFirestore(name: String, description: String, location: LatLng) {
-        val poi = hashMapOf(
+        val poiData = hashMapOf(
             "titulo" to name,
             "descricao" to description,
             "latitude" to location.latitude,
             "longitude" to location.longitude,
-            "imagemBase64" to selectedImageBase64, // A imagem agora está em Base64
-            "criado_por" to currentUserId,
-            "data_criacao" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+            "criado_por" to currentUserId
         )
 
-        db.collection("POIs").add(poi)
-            .addOnSuccessListener {
-                Toast.makeText(requireContext(), "POI adicionado com sucesso", Toast.LENGTH_SHORT).show()
+        // Inclui a imagem em base64 se ela foi selecionada
+        selectedImageBase64?.let {
+            poiData["imagemBase64"] = it
+        }
+
+        // Adiciona o POI ao Firestore
+        db.collection("POIs").add(poiData)
+            .addOnSuccessListener { documentReference ->
+                // Obtém o ID do POI gerado automaticamente
+                val poiId = documentReference.id
+
+                // Inclui o ID gerado no POI
+                val updatedPoiData = poiData.toMutableMap().apply {
+                    put("id", poiId)  // Adiciona o ID gerado
+                }
+
+                // Atualiza o documento com o ID, se necessário (mas já inclui no momento da adição)
+                // Esse passo pode ser desnecessário se o ID já estiver no documento
+                documentReference.set(updatedPoiData, SetOptions.merge())
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), "POI adicionado com sucesso com ID: $poiId", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(requireContext(), "Erro ao adicionar POI com ID: $poiId", Toast.LENGTH_SHORT).show()
+                    }
             }
             .addOnFailureListener { e ->
                 Toast.makeText(requireContext(), "Erro ao adicionar POI: ${e.message}", Toast.LENGTH_SHORT).show()
