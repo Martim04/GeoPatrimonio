@@ -7,12 +7,7 @@ import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.Spinner
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -20,12 +15,19 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.maps.DirectionsApi
 import com.google.maps.GeoApiContext
 import com.google.maps.model.DirectionsResult
 import com.google.maps.model.DirectionsRoute
 import com.google.maps.model.TravelMode
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import POI
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+
 class POIDetailFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
@@ -33,6 +35,11 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
     private lateinit var geoApiContext: GeoApiContext
     private lateinit var routeSelector: Spinner
     private var routes: List<DirectionsRoute> = emptyList()
+    private lateinit var commentsContainer: RecyclerView
+    private lateinit var commentInput: EditText
+    private lateinit var btnSubmitComment: Button
+    private val db = FirebaseFirestore.getInstance()
+    private lateinit var ratingBar: RatingBar
 
     companion object {
         private const val ARG_POI = "poi"
@@ -53,6 +60,9 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_poi_detail, container, false)
         poi = arguments?.getParcelable(ARG_POI) ?: throw IllegalArgumentException("POI is required")
+
+        // Inicialize o ratingBar aqui
+        ratingBar = view.findViewById(R.id.rating_bar)
 
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -78,11 +88,26 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
         view.findViewById<Button>(R.id.btn_walk).setOnClickListener { getRoute(TravelMode.WALKING) }
         view.findViewById<Button>(R.id.btn_transit).setOnClickListener { getRoute(TravelMode.TRANSIT) }
 
+        commentsContainer = view.findViewById(R.id.comments_recycler_view)
+        commentInput = view.findViewById(R.id.comment_input)
+        btnSubmitComment = view.findViewById(R.id.btn_submit_comment)
+
+        btnSubmitComment.setOnClickListener {
+            val commentText = commentInput.text.toString()
+            val rating = ratingBar.rating // Agora 'ratingBar' está inicializado corretamente
+            if (commentText.isNotEmpty()) {
+                submitComment(commentText, rating)
+            }
+        }
+
+        loadComments()
+
         return view
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        mMap.uiSettings.isZoomControlsEnabled = true
         val poiLocation = LatLng(poi.latitude, poi.longitude)
         mMap.addMarker(MarkerOptions().position(poiLocation).title(poi.title))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(poiLocation, 15f))
@@ -145,5 +170,44 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
             view?.findViewById<TextView>(R.id.route_duration)?.text = "Estimated travel time: $duration"
             view?.findViewById<TextView>(R.id.route_steps)?.text = stepsInfo.toString()
         }
+    }
+
+    private fun submitComment(commentText: String, rating: Float) {
+        val comment = hashMapOf(
+            "id_utilizador" to FirebaseAuth.getInstance().currentUser?.uid,
+            "id_poi" to poi.id,
+            "comentario" to commentText,
+            "avaliacao" to rating,
+            "data_comentario" to FieldValue.serverTimestamp()
+        )
+
+        db.collection("Comentarios").add(comment).addOnSuccessListener {
+            commentInput.text.clear()
+            ratingBar.rating = 0f
+            loadComments()
+        }.addOnFailureListener { e ->
+            Toast.makeText(requireContext(), "Failed to submit comment: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun loadComments() {
+        db.collection("Comentarios")
+            .whereEqualTo("id_poi", poi.id)
+            .orderBy("data_comentario", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { result ->
+                val commentList = mutableListOf<Comment>()
+                for (document in result) {
+                    val commentText = document.getString("comentario") ?: ""
+                    val rating = document.getDouble("avaliacao")?.toFloat() ?: 0f
+                    commentList.add(Comment(commentText, rating))
+                }
+                // Set the layout manager and adapter for comments RecyclerView
+                commentsContainer.layoutManager = LinearLayoutManager(context)
+                commentsContainer.adapter = CommentAdapter(commentList)
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to load comments: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }

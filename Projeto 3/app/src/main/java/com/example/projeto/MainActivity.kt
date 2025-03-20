@@ -52,8 +52,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.nav_view)
         toolbar = findViewById(R.id.toolbar)
-        zoomInButton = findViewById(R.id.zoomInButton)
-        zoomOutButton = findViewById(R.id.zoomOutButton)
+
         navIcon = findViewById(R.id.nav_icon)
 
         // Set Toolbar as ActionBar
@@ -125,13 +124,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         // Set zoom button listeners
-        zoomInButton.setOnClickListener {
-            zoomViewModel.zoomIn()
-        }
 
-        zoomOutButton.setOnClickListener {
-            zoomViewModel.zoomOut()
-        }
 
         // Fetch and display user details in the navigation header
         val headerView = navigationView.getHeaderView(0)
@@ -161,6 +154,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(porto, 15f))
         enableMyLocation()
         zoomViewModel.setGoogleMap(googleMap)
+        googleMap.uiSettings.isZoomControlsEnabled = true
     }
 
     private fun enableMyLocation() {

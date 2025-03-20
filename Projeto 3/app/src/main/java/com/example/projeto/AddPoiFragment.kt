@@ -77,6 +77,7 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        mMap.uiSettings.isZoomControlsEnabled = true
 
         mMap.setOnMapClickListener { latLng ->
             mMap.clear()

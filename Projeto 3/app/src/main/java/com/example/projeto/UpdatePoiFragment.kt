@@ -40,6 +40,8 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
     private val poiList = mutableListOf<POI>()
     private lateinit var viewFlipper: ViewFlipper
     private var currentPoi: POI? = null
+    private lateinit var poi: POI
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -96,10 +98,22 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        mMap.setOnMapClickListener { latLng ->
+        googleMap.uiSettings.isZoomControlsEnabled = true
+
+        // Configurações do mapa
+        mMap.uiSettings.isZoomGesturesEnabled = true
+        mMap.uiSettings.isScrollGesturesEnabled = true
+        mMap.uiSettings.isRotateGesturesEnabled = true
+        mMap.uiSettings.isTiltGesturesEnabled = true
+    }
+    private fun updateMapWithPoi(poi: POI) {
+        if (::mMap.isInitialized) {
             mMap.clear()
-            mMap.addMarker(MarkerOptions().position(latLng).title("Localização do POI"))
-            selectedLocation = latLng
+            val poiLocation = LatLng(poi.latitude, poi.longitude)
+            mMap.addMarker(MarkerOptions().position(poiLocation).title(poi.title))
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(poiLocation, 15f))
+        } else {
+            Toast.makeText(requireContext(), "Mapa ainda não carregado", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -126,6 +140,8 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
+
+
     private fun openEditView(poi: POI) {
         viewFlipper.displayedChild = 1
         currentPoi = poi
@@ -133,6 +149,8 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
         view?.findViewById<EditText>(R.id.editTextPoiName)?.setText(poi.title)
         view?.findViewById<EditText>(R.id.editTextPoiDescription)?.setText(poi.description)
         selectedLocation = LatLng(poi.latitude, poi.longitude)
+
+        updateMapWithPoi(poi) // Atualiza o mapa corretamente
 
         poi.imageBase64?.let {
             val imageBytes = Base64.decode(it, Base64.DEFAULT)

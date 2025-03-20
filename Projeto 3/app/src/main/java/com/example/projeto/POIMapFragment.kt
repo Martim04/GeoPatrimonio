@@ -53,6 +53,7 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
         loadUserPOIs()
+        googleMap.uiSettings.isZoomControlsEnabled = true
 
         // Verificação das permissões de localização
         if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||

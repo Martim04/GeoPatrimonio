@@ -51,6 +51,8 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         googleMap = map
         val defaultLocation = LatLng(-34.0, 151.0) // Localização padrão
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
+        googleMap.uiSettings.isZoomControlsEnabled = true
+
     }
 
     private fun loadPOIs() {

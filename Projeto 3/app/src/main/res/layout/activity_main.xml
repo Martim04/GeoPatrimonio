@@ -50,29 +50,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:id="@+id/zoomInButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="80dp"
-            android:text="+"
-            android:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
-
-        <Button
-            android:id="@+id/zoomOutButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
-            android:text="-"
-            android:backgroundTint="@color/colorPrimary"
-            android:textColor="@android:color/white" />
     </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
