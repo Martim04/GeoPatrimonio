@@ -15,12 +15,12 @@
             android:icon="@drawable/ic_def" />
         <item
             android:id="@+id/nav_pois"
-            android:icon="@drawable/ic_person"
+            android:icon="@drawable/ic_poi"
             android:title="POIs" />
         <item
             android:id="@+id/nav_add_poi"
             android:title="Adicionar POI"
-            android:icon="@drawable/ic_person" />
+            android:icon="@drawable/ic_add_poi" />
         <item
             android:id="@+id/nav_update_poi"
             android:icon="@drawable/ic_person"
@@ -43,7 +43,7 @@
             <item
                 android:id="@+id/nav_help"
                 android:title="Help"
-                android:icon="@drawable/ic_home" />
+                android:icon="@drawable/ic_help" />
         </menu>
     </item>
 
