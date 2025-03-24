@@ -27,6 +27,7 @@ import com.google.firebase.firestore.Query
 import POI
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.maps.model.MapStyleOptions
 
 class POIDetailFragment : Fragment(), OnMapReadyCallback {
 
@@ -111,6 +112,56 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
         val poiLocation = LatLng(poi.latitude, poi.longitude)
         mMap.addMarker(MarkerOptions().position(poiLocation).title(poi.title))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(poiLocation, 15f))
+        val style = """
+        [
+            {
+                "featureType": "poi.business",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.attraction",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.government",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.medical",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.park",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.place_of_worship",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.school",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.sports_complex",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            }
+        ]
+    """.trimIndent()
+
+        try {
+            googleMap.setMapStyle(MapStyleOptions(style))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Erro ao aplicar estilo ao mapa", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun getRoute(travelMode: TravelMode) {

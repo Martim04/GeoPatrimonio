@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +18,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -62,6 +64,56 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         } else {
             // Solicitar permissões, se necessário
             requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1)
+        }
+        val style = """
+        [
+            {
+                "featureType": "poi.business",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.attraction",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.government",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.medical",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.park",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.place_of_worship",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.school",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.sports_complex",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            }
+        ]
+    """.trimIndent()
+
+        try {
+            googleMap.setMapStyle(MapStyleOptions(style))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Erro ao aplicar estilo ao mapa", Toast.LENGTH_SHORT).show()
         }
     }
 

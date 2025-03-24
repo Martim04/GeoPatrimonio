@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import POI
 import android.graphics.Bitmap
+import com.google.android.gms.maps.model.MapStyleOptions
 
 class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
 
@@ -99,12 +100,62 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         googleMap.uiSettings.isZoomControlsEnabled = true
+        googleMap.uiSettings.isZoomGesturesEnabled = true
+        googleMap.uiSettings.isScrollGesturesEnabled = true
+        googleMap.uiSettings.isRotateGesturesEnabled = true
+        googleMap.uiSettings.isTiltGesturesEnabled = true
 
-        // Configurações do mapa
-        mMap.uiSettings.isZoomGesturesEnabled = true
-        mMap.uiSettings.isScrollGesturesEnabled = true
-        mMap.uiSettings.isRotateGesturesEnabled = true
-        mMap.uiSettings.isTiltGesturesEnabled = true
+        // Aplica um estilo de mapa para esconder nomes de lojas, restaurantes e monumentos
+        val style = """
+        [
+            {
+                "featureType": "poi.business",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.attraction",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.government",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.medical",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.park",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.place_of_worship",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.school",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            },
+            {
+                "featureType": "poi.sports_complex",
+                "elementType": "labels",
+                "stylers": [{"visibility": "off"}]
+            }
+        ]
+    """.trimIndent()
+
+        try {
+            googleMap.setMapStyle(MapStyleOptions(style))
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Erro ao aplicar estilo ao mapa", Toast.LENGTH_SHORT).show()
+        }
     }
     private fun updateMapWithPoi(poi: POI) {
         if (::mMap.isInitialized) {

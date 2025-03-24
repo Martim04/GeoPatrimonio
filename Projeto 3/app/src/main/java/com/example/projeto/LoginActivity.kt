@@ -21,6 +21,8 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import com.facebook.FacebookSdk
+import com.facebook.appevents.AppEventsLogger
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -31,6 +33,8 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        FacebookSdk.sdkInitialize(applicationContext)
+        AppEventsLogger.activateApp(application)
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
