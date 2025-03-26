@@ -46,12 +46,17 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 
         return view
     }
-
+    private fun addMarker(poi: POI) {
+        val location = LatLng(poi.latitude, poi.longitude)
+        googleMap.addMarker(MarkerOptions().position(location).title(poi.title))
+    }
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        val defaultLocation = LatLng(-34.0, 151.0) // Localização padrão
+        val defaultLocation = LatLng(41.1496, -8.61099) // Localização padrão: Porto, Portugal
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
         googleMap.uiSettings.isZoomControlsEnabled = true
+        loadPOIs()
+
 
     }
 
@@ -70,6 +75,8 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                     val imageBase64 = document.getString("imagemBase64")
                     val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
                     poiList.add(poi)
+                    addMarker(poi)
+
                 }
                 poiAdapter.notifyDataSetChanged()
             }

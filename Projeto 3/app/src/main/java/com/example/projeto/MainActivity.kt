@@ -110,6 +110,11 @@
                         startActivity(intent)
                         finish()
                     }
+                    R.id.nav_favorites -> {
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.fragment_container, FavoritePoisFragment())
+                            .commit()
+                    }
                 }
                 drawerLayout.closeDrawer(GravityCompat.START)
                 true

@@ -54,6 +54,7 @@
         android:id="@+id/buttonLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:cornerRadius="50dp"
         android:text="Login"
         android:backgroundTint="@color/colorPrimary"
         android:textColor="@android:color/white"

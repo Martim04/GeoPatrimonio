@@ -115,25 +115,35 @@ class POIMapFragment : Fragment(), OnMapReadyCallback {
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "Erro ao aplicar estilo ao mapa", Toast.LENGTH_SHORT).show()
         }
+        loadUserPOIs()
+
     }
 
     private fun loadUserPOIs() {
-        db.collection("POIs").get().addOnSuccessListener { result ->
-            poiList.clear()
-            for (document in result) {
-                val id = document.id
-                val title = document.getString("titulo") ?: "POI"
-                val description = document.getString("descricao") ?: ""
-                val latitude = document.getDouble("latitude") ?: 0.0
-                val longitude = document.getDouble("longitude") ?: 0.0
-                val imageBase64 = document.getString("imagemBase64")
-                val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
-                poiList.add(poi)
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        db.collection("POIs")
+            .whereEqualTo("criado_por", currentUserId)
+            .get()
+            .addOnSuccessListener { result ->
+                poiList.clear()
+                for (document in result) {
+                    val id = document.id
+                    val title = document.getString("titulo") ?: "POI"
+                    val description = document.getString("descricao") ?: ""
+                    val latitude = document.getDouble("latitude") ?: 0.0
+                    val longitude = document.getDouble("longitude") ?: 0.0
+                    val imageBase64 = document.getString("imagemBase64")
+                    val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
+                    poiList.add(poi)
+                    addMarker(poi)
+                }
+                poiAdapter.notifyDataSetChanged()
             }
-            poiAdapter.notifyDataSetChanged()
-        }
     }
-
+    private fun addMarker(poi: POI) {
+        val location = LatLng(poi.latitude, poi.longitude)
+        googleMap.addMarker(MarkerOptions().position(location).title(poi.title))
+    }
     private fun openMapFragment(poi: POI) {
         // Passando apenas o ID do POI para o fragmento de detalhes
         val fragment = POIDetailFragment.newInstance(poi)

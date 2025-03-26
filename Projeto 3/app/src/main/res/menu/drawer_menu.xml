@@ -6,6 +6,10 @@
             android:title="Home"
             android:icon="@drawable/ic_home" />
         <item
+            android:id="@+id/nav_favorites"
+            android:icon="@drawable/ic_star"
+            android:title="Favoritos" />
+        <item
             android:id="@+id/nav_profile"
             android:title="Profile"
             android:icon="@drawable/ic_person" />
@@ -23,12 +27,12 @@
             android:icon="@drawable/ic_add_poi" />
         <item
             android:id="@+id/nav_update_poi"
-            android:icon="@drawable/ic_person"
+            android:icon="@drawable/ic_update"
             android:title="Update POI"
             android:visible="false" />
         <item
             android:id="@+id/nav_admin"
-            android:icon="@drawable/ic_person"
+            android:icon="@drawable/ic_admin"
             android:title="Admin"
             android:visible="false"/>
     </group>

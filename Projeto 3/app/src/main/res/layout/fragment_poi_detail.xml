@@ -46,6 +46,15 @@
             android:lineSpacingExtra="4dp"
             android:paddingBottom="16dp" />
 
+        <!-- Estrela de Favoritos -->
+        <ImageView
+            android:id="@+id/btn_favorite"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:src="@drawable/ic_star_border"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Favorite Star" />
+
         <!-- Tempo estimado da rota -->
         <TextView
             android:id="@+id/route_duration"

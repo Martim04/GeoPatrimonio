@@ -238,20 +238,23 @@ class UpdatePoiFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun loadPublicPOIs() {
-        db.collection("POIs").get().addOnSuccessListener { result ->
-            poiList.clear()
-            for (document in result) {
-                val id = document.id
-                val title = document.getString("titulo") ?: "POI"
-                val description = document.getString("descricao") ?: ""
-                val latitude = document.getDouble("latitude") ?: 0.0
-                val longitude = document.getDouble("longitude") ?: 0.0
-                val imageBase64 = document.getString("imagemBase64")
-                val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
-                poiList.add(poi)
+        db.collection("POIs")
+            .whereEqualTo("publico", true)
+            .get()
+            .addOnSuccessListener { result ->
+                poiList.clear()
+                for (document in result) {
+                    val id = document.id
+                    val title = document.getString("titulo") ?: "POI"
+                    val description = document.getString("descricao") ?: ""
+                    val latitude = document.getDouble("latitude") ?: 0.0
+                    val longitude = document.getDouble("longitude") ?: 0.0
+                    val imageBase64 = document.getString("imagemBase64")
+                    val poi = POI(id, title, description, latitude, longitude, imageBase64 = imageBase64)
+                    poiList.add(poi)
+                }
+                poiAdapter.notifyDataSetChanged()
             }
-            poiAdapter.notifyDataSetChanged()
-        }
     }
     private fun deletePoiFromFirestore(id: String) {
         db.collection("POIs").document(id).delete()

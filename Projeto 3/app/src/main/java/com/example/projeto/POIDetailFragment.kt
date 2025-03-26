@@ -25,12 +25,15 @@ import com.google.maps.model.TravelMode
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import POI
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.maps.model.MapStyleOptions
 
 class POIDetailFragment : Fragment(), OnMapReadyCallback {
-
+    private lateinit var btnFavorite: AppCompatImageView
+    private var isFavorite = false
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid
     private lateinit var mMap: GoogleMap
     private lateinit var poi: POI
     private lateinit var geoApiContext: GeoApiContext
@@ -100,12 +103,77 @@ class POIDetailFragment : Fragment(), OnMapReadyCallback {
                 submitComment(commentText, rating)
             }
         }
+        btnFavorite = view.findViewById<AppCompatImageView>(R.id.btn_favorite)
+        checkIfFavorite()
+        btnFavorite.setOnClickListener { toggleFavorite() }
 
         loadComments()
 
         return view
     }
+    private fun checkIfFavorite() {
+        userId?.let { uid ->
+            db.collection("Favoritos")
+                .whereEqualTo("id_utilizador", uid)
+                .whereEqualTo("id_poi", poi.id)
+                .get()
+                .addOnSuccessListener { documents ->
+                    isFavorite = !documents.isEmpty
+                    updateFavoriteIcon()
+                }
+        }
+    }
+    private fun removeComments(poiId: String) {
+        db.collection("Comentarios")
+            .whereEqualTo("id_poi", poiId)
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    db.collection("Comentarios").document(document.id).delete()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Failed to remove comments: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
 
+    private fun toggleFavorite() {
+        userId?.let { uid ->
+            val favRef = db.collection("Favoritos")
+
+            if (isFavorite) {
+                // Remover dos favoritos
+                favRef.whereEqualTo("id_utilizador", uid)
+                    .whereEqualTo("id_poi", poi.id)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        for (document in documents) {
+                            favRef.document(document.id).delete()
+                        }
+                        isFavorite = false
+                        updateFavoriteIcon()
+                        removeComments(poi.id)
+                        Toast.makeText(requireContext(), "Removido dos favoritos", Toast.LENGTH_SHORT).show()
+                    }
+            } else {
+                // Adicionar aos favoritos
+                val favorito = hashMapOf(
+                    "id_utilizador" to uid,
+                    "id_poi" to poi.id,
+                    "data_adicionado" to FieldValue.serverTimestamp()
+                )
+                favRef.add(favorito).addOnSuccessListener {
+                    isFavorite = true
+                    updateFavoriteIcon()
+                    Toast.makeText(requireContext(), "Adicionado aos favoritos", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    private fun updateFavoriteIcon() {
+        val iconRes = if (isFavorite) R.drawable.ic_star else R.drawable.ic_star_border
+        btnFavorite.setImageResource(iconRes)
+    }
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true

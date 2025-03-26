@@ -36,6 +36,7 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
     private var selectedImageBase64: String? = null
     private val PICK_IMAGE_REQUEST = 1
     private lateinit var selectedImageView: ImageView
+    private var currentUserRole: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,7 +58,9 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
             val poiDescription = editTextPoiDescription.text.toString()
 
             if (poiName.isNotEmpty() && poiDescription.isNotEmpty() && selectedLocation != null) {
-                addPoiToFirestore(poiName, poiDescription, selectedLocation!!)
+                fetchUserRole {
+                    addPoiToFirestore(poiName, poiDescription, selectedLocation!!)
+                }
             } else {
                 Toast.makeText(requireContext(), "Preencha todos os campos", Toast.LENGTH_SHORT).show()
             }
@@ -120,33 +123,49 @@ class AddPoiFragment : Fragment(), OnMapReadyCallback {
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
+    private fun fetchUserRole(onComplete: () -> Unit) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val role = document.getString("type")
+                    currentUserRole = if (role == "admin") "admin" else "comum" // Garante que só aceita admin ou comum
+                } else {
+                    currentUserRole = "comum"
+                }
+                onComplete()
+            }
+            .addOnFailureListener {
+                currentUserRole = "comum"
+                onComplete()
+            }
+    }
+
     private fun addPoiToFirestore(name: String, description: String, location: LatLng) {
+        val isAdmin = currentUserRole == "admin"
+
         val poiData = hashMapOf(
             "titulo" to name,
             "descricao" to description,
             "latitude" to location.latitude,
             "longitude" to location.longitude,
-            "criado_por" to currentUserId
+            "criado_por" to currentUserId,
+            "publico" to isAdmin
         )
 
-        // Inclui a imagem em base64 se ela foi selecionada
         selectedImageBase64?.let {
             poiData["imagemBase64"] = it
         }
 
-        // Adiciona o POI ao Firestore
         db.collection("POIs").add(poiData)
             .addOnSuccessListener { documentReference ->
-                // Obtém o ID do POI gerado automaticamente
                 val poiId = documentReference.id
 
-                // Inclui o ID gerado no POI
                 val updatedPoiData = poiData.toMutableMap().apply {
-                    put("id", poiId)  // Adiciona o ID gerado
+                    put("id", poiId)
                 }
 
-                // Atualiza o documento com o ID, se necessário (mas já inclui no momento da adição)
-                // Esse passo pode ser desnecessário se o ID já estiver no documento
                 documentReference.set(updatedPoiData, SetOptions.merge())
                     .addOnSuccessListener {
                         Toast.makeText(requireContext(), "POI adicionado com sucesso com ID: $poiId", Toast.LENGTH_SHORT).show()
