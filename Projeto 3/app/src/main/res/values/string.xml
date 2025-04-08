@@ -12,4 +12,7 @@
     <string name="facebook_sign_in">Sign in with Facebook</string>
     <string name="google_maps_key">AIzaSyAO5Kh-IpngmRnUoq0npG9jZ9p2n6xvfU0</string>
     <string name="facebook_app_id">665916952843328</string>
+    <string name="walking">A Pé</string>
+    <string name="driving">Carro</string>
+    <string name="transit">Transportes</string>
 </resources>

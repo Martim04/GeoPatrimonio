@@ -6,4 +6,11 @@
     <color name="colorGray">#B0B0B0</color>
     <color name="white">#FFFFFF</color><!-- Cor cinza para o menu lateral -->
     <color name="zoom_button_background">#B0B0B0</color>
+    <color name="colorPrimaryDark">#2D3B45</color>
+    <color name="colorSecondaryText">#637381</color>
+    <color name="colorAccent">#FFC107</color>
+    <color name="colorImagePlaceholder">#F5F7FA</color>
+    <color name="background_light">#F5F5F5</color>
+    <color name="switch_thumb_color">@android:color/white</color>
+    <color name="switch_track_color">#B0BEC5</color>
 </resources>

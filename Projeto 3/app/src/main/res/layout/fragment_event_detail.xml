@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:clipToPadding="false">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Event Header -->
+            <TextView
+                android:id="@+id/event_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:paddingBottom="8dp"
+                android:fontFamily="sans-serif-medium"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="12dp">
+
+                <TextView
+                    android:id="@+id/poi_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:drawableStart="@drawable/ic_location"
+                    android:drawablePadding="4dp"/>
+
+                <TextView
+                    android:id="@+id/event_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="#757575"
+                    android:drawableStart="@drawable/ic_calendar"
+                    android:drawablePadding="4dp"/>
+            </LinearLayout>
+
+            <!-- Description -->
+            <TextView
+                android:id="@+id/event_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#424242"
+                android:paddingBottom="16dp"
+                android:lineSpacingExtra="4dp"/>
+
+            <!-- Map Container -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                android:layout_marginBottom="16dp">
+
+                <fragment
+                    android:id="@+id/map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"/>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Transport Mode Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="8dp"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_walking"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/walking"
+                    android:textAllCaps="false"
+                    android:backgroundTint="@color/colorPrimary"
+                    app:icon="@drawable/ic_directions_walk"
+                    app:iconTint="@android:color/white"
+                    app:cornerRadius="16dp"
+                    android:textColor="@android:color/white"
+                    android:layout_margin="6dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_driving"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/driving"
+                    android:textAllCaps="false"
+                    android:backgroundTint="@color/colorPrimary"
+                    app:icon="@drawable/ic_directions_car"
+                    app:iconTint="@android:color/white"
+                    app:cornerRadius="16dp"
+                    android:textColor="@android:color/white"
+                    android:layout_margin="6dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_transit"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="@string/transit"
+                    android:textAllCaps="false"
+                    android:backgroundTint="@color/colorPrimary"
+                    app:icon="@drawable/ic_directions_transit"
+                    app:iconTint="@android:color/white"
+                    app:cornerRadius="16dp"
+                    android:textColor="@android:color/white"
+                    android:layout_margin="6dp"/>
+            </LinearLayout>
+
+            <!-- Route Options Spinner (visível apenas para transporte público) -->
+            <Spinner
+                android:id="@+id/route_options_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:padding="8dp"
+                android:background="#F5F5F5"/>
+
+            <!-- Transit Instructions -->
+            <TextView
+                android:id="@+id/transit_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:textSize="14sp"
+                android:textColor="#424242"
+                android:padding="8dp"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.core.widget.NestedScrollView>

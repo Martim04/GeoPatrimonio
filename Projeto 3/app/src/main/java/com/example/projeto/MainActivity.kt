@@ -23,7 +23,7 @@
     import com.google.android.material.navigation.NavigationView
     import com.google.firebase.auth.FirebaseAuth
     import com.google.firebase.firestore.FirebaseFirestore
-
+    import com.example.projeto.FavoriteEventsFragment
     class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         private lateinit var drawerLayout: DrawerLayout
@@ -92,9 +92,19 @@
                             .replace(R.id.fragment_container, AddPoiFragment())
                             .commit()
                     }
+                    R.id.nav_favorite_events -> {
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.fragment_container, FavoriteEventsFragment())
+                            .commit()
+                    }
                     R.id.nav_update_poi -> {
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.fragment_container, UpdatePoiFragment())
+                            .commit()
+                    }
+                    R.id.nav_add_event -> {
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.fragment_container, AddEventFragment())
                             .commit()
                     }
                     R.id.nav_admin -> {
@@ -145,6 +155,7 @@
                         navHeaderEmail.text = document.getString("email")
                         val userType = document.getString("type")
                         if (userType == "admin") {
+                            navigationView.menu.findItem(R.id.nav_add_event).isVisible = true
                             navigationView.menu.findItem(R.id.nav_update_poi).isVisible = true
                             navigationView.menu.findItem(R.id.nav_admin).isVisible = true
 

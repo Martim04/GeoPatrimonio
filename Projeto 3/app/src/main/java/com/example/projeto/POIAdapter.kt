@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import POI
 
 
 class POIAdapter(private val poiList: List<POI>, private val onItemClick: (POI) -> Unit) : RecyclerView.Adapter<POIAdapter.POIViewHolder>() {

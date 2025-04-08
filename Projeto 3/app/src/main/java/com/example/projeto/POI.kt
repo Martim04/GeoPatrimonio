@@ -1,3 +1,4 @@
+package com.example.projeto
 import android.os.Parcel
 import android.os.Parcelable
 
@@ -29,6 +30,7 @@ data class POI(
         parcel.writeFloat(distance)
         parcel.writeString(imageBase64)
     }
+
 
     override fun describeContents() = 0
 

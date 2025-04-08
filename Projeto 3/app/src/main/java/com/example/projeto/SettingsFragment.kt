@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 class SettingsFragment : Fragment() {
 
@@ -24,10 +25,10 @@ class SettingsFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_settings, container, false)
 
         val buttonEditProfile = view.findViewById<Button>(R.id.buttonEditProfile)
-        val switchNotifications = view.findViewById<Switch>(R.id.switchNotifications)
+        val switchNotifications = view.findViewById<SwitchMaterial>(R.id.switchNotifications)
         val buttonPrivacySettings = view.findViewById<Button>(R.id.buttonPrivacySettings)
         val spinnerLanguage = view.findViewById<Spinner>(R.id.spinnerLanguage)
-        val switchTheme = view.findViewById<Switch>(R.id.switchTheme)
+        val switchTheme = view.findViewById<SwitchMaterial>(R.id.switchTheme)
 
         buttonEditProfile.setOnClickListener {
             // Navegar para a tela de edição de perfil

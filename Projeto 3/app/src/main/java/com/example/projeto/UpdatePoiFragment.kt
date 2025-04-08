@@ -24,7 +24,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import POI
 import android.graphics.Bitmap
 import com.google.android.gms.maps.model.MapStyleOptions
 

@@ -24,7 +24,6 @@ import com.google.maps.model.DirectionsRoute
 import com.google.maps.model.TravelMode
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import POI
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
