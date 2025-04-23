@@ -10,18 +10,23 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.PolyUtil
 import org.json.JSONObject
+import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.concurrent.thread
 
@@ -31,12 +36,16 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
     private lateinit var event: Event
     private lateinit var poiTitleTextView: TextView
     private lateinit var mMap: GoogleMap
+    private lateinit var mapView: MapView
     private lateinit var transitInstructionsTextView: TextView
     private lateinit var routeOptionsSpinner: Spinner
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var poiLatLng: LatLng? = null
-    private var currentPolyline: com.google.android.gms.maps.model.Polyline? = null
+    private var userLocation: LatLng? = null
+    private var currentPolyline: Polyline? = null
+    private var originMarker: Marker? = null
+    private var destinationMarker: Marker? = null
     private var isMapSetup = false
-    private val bolhaoLocation = LatLng(41.1496, -8.6075) // Mercado do Bolhão
     private var transitRoutes: List<Pair<String, List<LatLng>>> = emptyList()
 
     companion object {
@@ -53,6 +62,11 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -60,38 +74,69 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
         val view = inflater.inflate(R.layout.fragment_event_detail, container, false)
         event = arguments?.getParcelable(ARG_EVENT) ?: throw IllegalArgumentException("Event is required")
 
-        // Inicializar views
         poiTitleTextView = view.findViewById(R.id.poi_title)
         transitInstructionsTextView = view.findViewById(R.id.transit_instructions)
         routeOptionsSpinner = view.findViewById(R.id.route_options_spinner)
+        mapView = view.findViewById(R.id.map_view)
         view.findViewById<TextView>(R.id.event_title).text = event.title
         view.findViewById<TextView>(R.id.event_description).text = event.description
         view.findViewById<TextView>(R.id.event_date).text = event.eventDate
 
-        // Carregar detalhes do POI
+        mapView.onCreate(savedInstanceState)
+        mapView.getMapAsync(this)
+
         loadPoiDetails(event.poiId)
-
-        // Configurar mapa
-        val mapFragment = childFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
-        mapFragment?.getMapAsync(this) ?: Log.e(TAG, "Map fragment not found")
-
-        // Configurar botões de transporte
         setupTransportButtons(view)
 
         return view
     }
 
+    override fun onStart() {
+        super.onStart()
+        mapView.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mapView.onResume()
+    }
+
+    override fun onPause() {
+        mapView.onPause()
+        super.onPause()
+    }
+
+    override fun onStop() {
+        mapView.onStop()
+        super.onStop()
+    }
+
+    override fun onDestroyView() {
+        mapView.onDestroy()
+        super.onDestroyView()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        mapView.onSaveInstanceState(outState)
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        mapView.onLowMemory()
+    }
+
     private fun setupTransportButtons(view: View) {
         view.findViewById<MaterialButton>(R.id.btn_walking)?.setOnClickListener {
-            drawRouteWithMode(bolhaoLocation, poiLatLng, "walking")
+            drawRouteWithMode(userLocation, poiLatLng, "walking")
             toggleTransitViews(false)
         }
         view.findViewById<MaterialButton>(R.id.btn_driving)?.setOnClickListener {
-            drawRouteWithMode(bolhaoLocation, poiLatLng, "driving")
+            drawRouteWithMode(userLocation, poiLatLng, "driving")
             toggleTransitViews(false)
         }
         view.findViewById<MaterialButton>(R.id.btn_transit)?.setOnClickListener {
-            drawTransitRoutes(bolhaoLocation, poiLatLng)
+            drawTransitRoutes(userLocation, poiLatLng)
         }
     }
 
@@ -124,6 +169,10 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap.apply {
             uiSettings.isZoomControlsEnabled = true
+            uiSettings.isZoomGesturesEnabled = true
+            uiSettings.isScrollGesturesEnabled = true
+            uiSettings.isTiltGesturesEnabled = true
+            uiSettings.isRotateGesturesEnabled = true
         }
 
         if (checkLocationPermission()) {
@@ -137,13 +186,19 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
         return ActivityCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+        ) == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestLocationPermission() {
-        ActivityCompat.requestPermissions(
-            requireActivity(),
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
             LOCATION_PERMISSION_REQUEST_CODE
         )
     }
@@ -151,7 +206,15 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
     private fun setupLocationAndMap() {
         try {
             mMap.isMyLocationEnabled = true
-            if (poiLatLng != null && !isMapSetup) setupMap()
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    userLocation = location?.let { LatLng(it.latitude, it.longitude) }
+                    if (poiLatLng != null && !isMapSetup) setupMap()
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Erro ao obter localização: ${e.message}", e)
+                    Toast.makeText(context, "Erro ao obter localização", Toast.LENGTH_SHORT).show()
+                }
         } catch (e: SecurityException) {
             Log.e(TAG, "Erro ao habilitar localização: ${e.message}", e)
             Toast.makeText(context, "Permissão de localização necessária", Toast.LENGTH_SHORT).show()
@@ -160,8 +223,15 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
 
     private fun setupMap() {
         poiLatLng?.let { destination ->
-            mMap.addMarker(MarkerOptions().position(destination).title(event.title))
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(destination, 15f))
+            destinationMarker = mMap.addMarker(MarkerOptions().position(destination).title(event.title))
+            userLocation?.let { origin ->
+                originMarker = mMap.addMarker(MarkerOptions().position(origin).title("Sua Localização"))
+                val bounds = LatLngBounds.builder()
+                    .include(origin)
+                    .include(destination)
+                    .build()
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+            } ?: mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(destination, 15f))
             isMapSetup = true
         } ?: Log.w(TAG, "poiLatLng é nulo")
     }
@@ -220,11 +290,20 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
                 "destination=${destination.latitude},${destination.longitude}&" +
                 "mode=$mode" +
                 (if (alternatives) "&alternatives=true" else "") +
-                "&key=${getString(R.string.google_maps_key)}"
+                "&key=${resources.getString(R.string.google_maps_key)}"
     }
 
     private fun fetchDirections(url: String): JSONObject {
-        return JSONObject(URL(url).readText())
+        return try {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.connectTimeout = 10000 // 10 segundos
+            connection.readTimeout = 10000
+            val jsonText = connection.inputStream.bufferedReader().use { it.readText() }
+            JSONObject(jsonText)
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao buscar direções: ${e.message}", e)
+            JSONObject().put("status", "REQUEST_FAILED")
+        }
     }
 
     private fun parseRoutePath(jsonObject: JSONObject): List<LatLng> {
@@ -273,9 +352,10 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
     private fun updateMapWithRoute(path: List<LatLng>, mode: String, origin: LatLng, destination: LatLng) {
         activity?.runOnUiThread {
             currentPolyline?.remove()
+            val simplifiedPath = PolyUtil.simplify(path, 10.0) // Simplifica a polilinha
             currentPolyline = mMap.addPolyline(
                 PolylineOptions()
-                    .addAll(path)
+                    .addAll(simplifiedPath)
                     .width(10f)
                     .color(when (mode) {
                         "walking" -> requireContext().getColor(android.R.color.holo_green_dark)
@@ -307,19 +387,22 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
     private fun displayTransitRoute(routeIndex: Int) {
         val (description, path) = transitRoutes[routeIndex]
         currentPolyline?.remove()
+        val simplifiedPath = PolyUtil.simplify(path, 10.0) // Simplifica a polilinha
         currentPolyline = mMap.addPolyline(
             PolylineOptions()
-                .addAll(path)
+                .addAll(simplifiedPath)
                 .width(10f)
                 .color(requireContext().getColor(android.R.color.holo_orange_dark))
         )
-        updateMapMarkersAndBounds(bolhaoLocation, poiLatLng!!)
+        updateMapMarkersAndBounds(userLocation!!, poiLatLng!!)
         transitInstructionsTextView.text = description
     }
 
     private fun updateMapMarkersAndBounds(origin: LatLng, destination: LatLng) {
-        mMap.addMarker(MarkerOptions().position(origin).title("Mercado do Bolhão"))
-        mMap.addMarker(MarkerOptions().position(destination).title(event.title))
+        originMarker?.remove()
+        destinationMarker?.remove()
+        originMarker = mMap.addMarker(MarkerOptions().position(origin).title("Sua Localização"))
+        destinationMarker = mMap.addMarker(MarkerOptions().position(destination).title(event.title))
         val bounds = LatLngBounds.builder().include(origin).include(destination).build()
         mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
     }
@@ -345,15 +428,13 @@ class EventDetailFragment : Fragment(), OnMapReadyCallback {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (::mMap.isInitialized) setupLocationAndMap()
-        } else {
-            Toast.makeText(context, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (::mMap.isInitialized) setupLocationAndMap()
+            } else {
+                Toast.makeText(context, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
+            }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        currentPolyline?.remove()
     }
 }

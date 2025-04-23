@@ -20,7 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 class FavoriteEventsFragment : Fragment() {
 
     private val db by lazy { FirebaseFirestore.getInstance() }
-    private var eventsAdapter: EventAdapter? = null // Removido lateinit para evitar problemas
+    private var eventsAdapter: EventAdapter? = null
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocation: LatLng? = null
     private var recyclerView: RecyclerView? = null
@@ -42,7 +42,6 @@ class FavoriteEventsFragment : Fragment() {
         recyclerView = view.findViewById(R.id.events_recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(context)
 
-        // Verificar se o RecyclerView foi encontrado
         if (recyclerView == null) {
             Log.e(TAG, "RecyclerView não encontrado no layout")
             showToast("Erro: RecyclerView não encontrado")
@@ -142,7 +141,7 @@ class FavoriteEventsFragment : Fragment() {
     private fun openEventDetailFragment(event: Event) {
         val fragment = EventDetailFragment.newInstance(event)
         parentFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
+            .replace(R.id.map_container, fragment) // Alterado para map_container
             .addToBackStack(null)
             .commit()
     }
@@ -176,6 +175,6 @@ class FavoriteEventsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         recyclerView = null
-        eventsAdapter = null // Limpar referência
+        eventsAdapter = null
     }
 }

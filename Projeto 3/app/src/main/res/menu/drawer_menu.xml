@@ -6,18 +6,6 @@
             android:title="Home"
             android:icon="@drawable/ic_home" />
         <item
-            android:id="@+id/nav_favorites"
-            android:icon="@drawable/ic_star"
-            android:title="Favoritos" />
-        <item
-            android:id="@+id/nav_profile"
-            android:title="Profile"
-            android:icon="@drawable/ic_person" />
-        <item
-            android:id="@+id/nav_settings"
-            android:title="Settings"
-            android:icon="@drawable/ic_def" />
-        <item
             android:id="@+id/nav_pois"
             android:icon="@drawable/ic_poi"
             android:title="POIs" />
@@ -26,9 +14,18 @@
             android:title="Adicionar POI"
             android:icon="@drawable/ic_add_poi" />
         <item
-            android:id="@+id/nav_favorite_events"
+            android:id="@+id/nav_favorites"
             android:icon="@drawable/ic_star"
             android:title="Favoritos" />
+        <item
+            android:id="@+id/nav_profile"
+            android:title="Profile"
+            android:icon="@drawable/ic_person" />
+
+        <item
+            android:id="@+id/nav_favorite_events"
+            android:icon="@drawable/ic_star"
+            android:title="Eventos Favoritos" />
         <item
             android:id="@+id/nav_add_event"
             android:icon="@drawable/ic_update"
@@ -44,6 +41,10 @@
             android:icon="@drawable/ic_admin"
             android:title="Admin"
             android:visible="false"/>
+        <item
+            android:id="@+id/nav_settings"
+            android:title="Settings"
+            android:icon="@drawable/ic_def" />
     </group>
 
     <!-- Divider -->
