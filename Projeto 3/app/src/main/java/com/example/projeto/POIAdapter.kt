@@ -40,7 +40,11 @@ class POIAdapter(private val poiList: List<POI>, private val onItemClick: (POI) 
 
         holder.itemView.setOnClickListener { onItemClick(poi) }
     }
-
+    fun updatePOIs(newPOIs: List<POI>) {
+        (poiList as MutableList).clear()
+        poiList.addAll(newPOIs)
+        notifyDataSetChanged()
+    }
 
     override fun getItemCount() = poiList.size
 }

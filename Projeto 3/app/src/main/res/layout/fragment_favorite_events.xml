@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Eventos Favoritos"
+        android:text="Eventos"
         android:textSize="24sp"
         android:textStyle="bold"
         android:paddingBottom="16dp" />

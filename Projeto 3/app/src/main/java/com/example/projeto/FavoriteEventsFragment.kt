@@ -16,6 +16,9 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class FavoriteEventsFragment : Fragment() {
 
@@ -113,14 +116,21 @@ class FavoriteEventsFragment : Fragment() {
         db.collection("Eventos")
             .get()
             .addOnSuccessListener { result ->
+                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                 val events = result.mapNotNull { document ->
                     try {
+                        val eventDate = document.getString("data_evento") ?: return@mapNotNull null
+                        if (eventDate < currentDate) {
+                            // Excluir evento expirado
+                            db.collection("Eventos").document(document.id).delete()
+                            return@mapNotNull null
+                        }
                         Event(
                             id = document.id,
                             title = document.getString("titulo") ?: "",
                             description = document.getString("descricao") ?: "",
                             creationDate = document.getString("data_criacao") ?: "",
-                            eventDate = document.getString("data_evento") ?: "",
+                            eventDate = eventDate,
                             poiId = document.getString("id_poi") ?: "",
                             latitude = document.getDouble("latitude") ?: 0.0,
                             longitude = document.getDouble("longitude") ?: 0.0
