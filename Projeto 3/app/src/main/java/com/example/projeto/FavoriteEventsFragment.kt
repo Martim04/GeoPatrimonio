@@ -116,21 +116,25 @@ class FavoriteEventsFragment : Fragment() {
         db.collection("Eventos")
             .get()
             .addOnSuccessListener { result ->
-                val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                val currentDate = Date() // Data atual
+
                 val events = result.mapNotNull { document ->
                     try {
-                        val eventDate = document.getString("data_evento") ?: return@mapNotNull null
-                        if (eventDate < currentDate) {
-                            // Excluir evento expirado
-                            db.collection("Eventos").document(document.id).delete()
-                            return@mapNotNull null
+                        val eventDateStr = document.getString("data_evento") ?: return@mapNotNull null
+                        val eventDate = dateFormat.parse(eventDateStr) ?: return@mapNotNull null
+
+                        // Verificar se o evento é futuro (incluindo hoje)
+                        if (eventDate.before(currentDate) && !isSameDay(eventDate, currentDate)) {
+                            return@mapNotNull null // Ignorar eventos passados
                         }
+
                         Event(
                             id = document.id,
                             title = document.getString("titulo") ?: "",
                             description = document.getString("descricao") ?: "",
                             creationDate = document.getString("data_criacao") ?: "",
-                            eventDate = eventDate,
+                            eventDate = eventDateStr,
                             poiId = document.getString("id_poi") ?: "",
                             latitude = document.getDouble("latitude") ?: 0.0,
                             longitude = document.getDouble("longitude") ?: 0.0
@@ -147,7 +151,12 @@ class FavoriteEventsFragment : Fragment() {
                 showToast("Falha ao carregar eventos")
             }
     }
-
+    private fun isSameDay(date1: Date, date2: Date): Boolean {
+        val cal1 = java.util.Calendar.getInstance().apply { time = date1 }
+        val cal2 = java.util.Calendar.getInstance().apply { time = date2 }
+        return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+                cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR)
+    }
     private fun openEventDetailFragment(event: Event) {
         val fragment = EventDetailFragment.newInstance(event)
         parentFragmentManager.beginTransaction()
