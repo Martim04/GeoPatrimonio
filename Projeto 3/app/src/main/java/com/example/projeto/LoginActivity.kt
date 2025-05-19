@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.facebook.CallbackManager
 import com.google.android.material.button.MaterialButton
@@ -46,25 +47,46 @@ class LoginActivity : AppCompatActivity() {
         val buttonGoogleLogin = findViewById<MaterialButton>(R.id.buttonGoogleLogin)
         val buttonFacebookLogin = findViewById<MaterialButton>(R.id.buttonFacebookLogin)
         val textViewRegister = findViewById<TextView>(R.id.textViewRegister)
+        val textViewForgotPassword = findViewById<TextView>(R.id.textViewForgotPassword)
 
         buttonLogin.setOnClickListener {
             val email = editTextEmail.text.toString()
             val password = editTextPassword.text.toString()
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    } else {
-                        // Handle login failure
+            if (email.isNotEmpty() && password.isNotEmpty()) {
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this) { task ->
+                        if (task.isSuccessful) {
+                            val intent = Intent(this, MainActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        } else {
+                            Toast.makeText(this, "Login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
+            } else {
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
+            }
         }
 
         textViewRegister.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
             startActivity(intent)
+        }
+
+        textViewForgotPassword.setOnClickListener {
+            val email = editTextEmail.text.toString()
+            if (email.isNotEmpty()) {
+                auth.sendPasswordResetEmail(email)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(this, "Password reset email sent", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            } else {
+                Toast.makeText(this, "Please enter your email", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Google Sign-In
@@ -106,20 +128,21 @@ class LoginActivity : AppCompatActivity() {
                                         }
                                         .addOnFailureListener { e ->
                                             Log.e("LoginActivity", "Error saving user data", e)
+                                            Toast.makeText(this@LoginActivity, "Error saving user data", Toast.LENGTH_SHORT).show()
                                         }
                                 }
                             } else {
-                                // Handle login failure
+                                Toast.makeText(this@LoginActivity, "Facebook login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                             }
                         }
                 }
 
                 override fun onCancel() {
-                    // Handle cancel
+                    Toast.makeText(this@LoginActivity, "Facebook login cancelled", Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onError(error: FacebookException) {
-                    // Handle error
+                    Toast.makeText(this@LoginActivity, "Facebook login error: ${error.message}", Toast.LENGTH_SHORT).show()
                 }
             })
         }
@@ -130,35 +153,40 @@ class LoginActivity : AppCompatActivity() {
         callbackManager.onActivityResult(requestCode, resultCode, data)
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-            auth.signInWithCredential(credential)
-                .addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        val user = auth.currentUser
-                        user?.let {
-                            val userId = it.uid
-                            val userDoc = hashMapOf(
-                                "name" to it.displayName,
-                                "email" to it.email,
-                                "type" to "comum",
-                                "registration_date" to FieldValue.serverTimestamp()
-                            )
+            try {
+                val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+                auth.signInWithCredential(credential)
+                    .addOnCompleteListener(this) { task ->
+                        if (task.isSuccessful) {
+                            val user = auth.currentUser
+                            user?.let {
+                                val userId = it.uid
+                                val userDoc = hashMapOf(
+                                    "name" to it.displayName,
+                                    "email" to it.email,
+                                    "type" to "comum",
+                                    "registration_date" to FieldValue.serverTimestamp()
+                                )
 
-                            db.collection("users").document(userId).set(userDoc)
-                                .addOnSuccessListener {
-                                    val intent = Intent(this, MainActivity::class.java)
-                                    startActivity(intent)
-                                    finish()
-                                }
-                                .addOnFailureListener { e ->
-                                    Log.e("LoginActivity", "Error saving user data", e)
-                                }
+                                db.collection("users").document(userId).set(userDoc)
+                                    .addOnSuccessListener {
+                                        val intent = Intent(this, MainActivity::class.java)
+                                        startActivity(intent)
+                                        finish()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Log.e("LoginActivity", "Error saving user data", e)
+                                        Toast.makeText(this, "Error saving user data", Toast.LENGTH_SHORT).show()
+                                    }
+                            }
+                        } else {
+                            Toast.makeText(this, "Google login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        // Handle login failure
                     }
-                }
+            } catch (e: com.google.android.gms.common.api.ApiException) {
+                Toast.makeText(this, "Google login error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
